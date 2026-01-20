@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Votação CIPA-PAUV 2026/2027 - Unimed Vitória</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; font-family:Arial,sans-serif; overflow:hidden; }
+body { display:flex; flex-direction:column; background:#e6f5e6; }
+
+header { background:#006837; padding:15px; text-align:center; }
+header img { max-width:220px; }
+
+section { display:none; flex:1; width:100%; justify-content:center; align-items:center; flex-direction:column; text-align:center; }
+
+h1,h2,h3 { color:#006837; margin-bottom:30px; }
+
+button {
+  display:inline-block;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:24px;
+  padding:15px 25px;
+  min-width:180px;
+  margin:15px auto;
+  background:#006837;
+  color:#fff;
+  text-align:center;
+}
+button:hover { background:#004d26; }
+
+#painel {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:40px;
+  width:100%;
+  max-width:1200px;
+  justify-items:center;
+}
+
+.candidato {
+  background:#fff;
+  border-radius:15px;
+  padding:20px;
+  text-align:center;
+  width:180px;
+  box-shadow:0 3px 15px rgba(0,0,0,0.2);
+  cursor:pointer;
+  transition: transform 0.2s, box-shadow 0.3s, border 0.3s;
+}
+.candidato:hover { transform: scale(1.05); }
+.candidato.selecionado { border:4px solid #006837; box-shadow:0 0 20px #00a33a; animation: pulse 1s infinite alternate; }
+@keyframes pulse { 0% { box-shadow:0 0 10px #00a33a; } 100% { box-shadow:0 0 25px #00ff66; } }
+
+.candidato img { width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #006837; }
+.nome { margin:15px 0; font-weight:bold; color:#006837; font-size:16px; }
+
+.modal {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:none; align-items:center; justify-content:center; z-index:1000;
+}
+.modal-box {
+  background:#fff; padding:30px; border-radius:15px; text-align:center; max-width:380px; width:90%;
+}
+.modal-box img { width:120px; height:120px; border-radius:50%; border:3px solid #006837; margin-bottom:15px; }
+.modal-box h3 { color:#006837; margin-bottom:20px; font-size:22px; }
+
+.alerta {
+  position: fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:#006837; color:#fff; padding:25px 40px; border-radius:15px; font-size:22px; display:none; z-index:1100;
+  text-align:center;
+}
+
+.grafico { width:90%; max-width:900px; margin:30px auto; }
+.linha { margin-bottom:18px; }
+.label { font-weight:bold; color:#004d26; margin-bottom:8px; font-size:18px; }
+.barra { background:#cde8cd; border-radius:25px; overflow:hidden; }
+.preenchimento {
+  height:35px;
+  background:#006837;
+  color:#fff;
+  text-align:right;
+  padding-right:12px;
+  line-height:35px;
+  font-size:16px;
+  width:0;
+  transition: width 1.5s ease-in-out;
+}
+
+#modalSenha input { font-size:20px; padding:12px; width:100%; border-radius:8px; margin-bottom:15px; }
+
+@media(max-width:768px){ #painel { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:480px){ #painel { grid-template-columns:1fr; } }
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="unimed_vitoria_logo.png" alt="Unimed Vitória">
+</header>
+
+<audio id="somSucesso" src="audio/sucesso.mp3" preload="auto"></audio>
+
+<section id="entrada" style="display:flex; flex-direction:column; align-items:center;">
+  <h1 style="font-size:48px;">Votação CIPA-PAUV</h1>
+  <p style="font-size:64px; font-weight:bold; color:#006837; margin:20px 0;">
+    Gestão 2026/2027
+  </p>
+  <button onclick="entrar()">Entrar para Votar</button>
+  <button onclick="acessoAdmin()">Mostrar Votação</button>
+</section>
+
+<section id="votacao">
+  <h2>Painel de Votação</h2>
+  <form onsubmit="abrirConfirmacao(event)">
+    <div id="painel"></div>
+    <button type="submit">Confirmar Voto</button>
+  </form>
+</section>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <img id="modalFoto">
+    <h3 id="modalNome"></h3>
+    <p>Confirma seu voto neste candidato?</p>
+    <button onclick="confirmarVoto()">Confirmar</button>
+    <button onclick="cancelarVoto()">Cancelar</button>
+  </div>
+</div>
+
+<div class="alerta" id="alerta">Voto registrado com sucesso!</div>
+
+<div class="modal" id="modalSenha">
+  <div class="modal-box">
+    <h3>Acesso Administrativo</h3>
+    <input type="password" id="senhaAdmin" placeholder="Digite a senha">
+    <button onclick="validarSenha()">Entrar</button>
+    <button onclick="fecharSenha()">Cancelar</button>
+  </div>
+</div>
+
+<section id="admin">
+  <h2>Resultado da Votação</h2>
+  <button onclick="imprimirResultado()">Imprimir Resultado</button>
+  <div class="grafico" id="resultado"></div>
+  <button onclick="voltar()">Voltar</button>
+</section>
+
+<script>
+// --- Lista de fotos (adicione fotos na pasta 'fotos/' com padrão NN-nome.jpg) ---
+const fotos = [
+  "fotos/01-Wanilton_Laurenco.jpg",
+  "fotos/02-maria_oliveira.jpg",
+  "fotos/03-ana_pereira.jpg",
+  "fotos/04-carlos_souza.jpg",
+  "fotos/05-lucas_ferreira.jpg",
+  "fotos/06-ana_paula.jpg",
+  "fotos/07-bruna_martins.jpg",
+  "fotos/08-ricardo_lima.jpg",
+  "fotos/09-juliana_rodrigues.jpg"
+];
+
+// Gera nomes e números automaticamente a partir do nome da foto
+const nomes = fotos.map(f=>{
+  const file = f.split('/').pop().split('.')[0]; // "01-joao_silva"
+  const num = file.slice(0,2); // "01"
+  const nomeArquivo = file.slice(3); // "joao_silva"
+  const partes = nomeArquivo.split(/_|-/);
+  return `${num} - ${partes.map(p=>p.charAt(0).toUpperCase() + p.slice(1)).join(' ')}`;
+});
+
+// Inicializa votos
+let votos = JSON.parse(localStorage.getItem("votosCIPA")) || Array(fotos.length).fill(0);
+let votoTemp = null;
+
+// Criar painel de candidatos
+const painel = document.getElementById("painel");
+fotos.forEach((foto,i)=>{
+  const div = document.createElement("div");
+  div.className = "candidato";
+  div.innerHTML = `
+    <img src="${foto}">
+    <div class="nome">${nomes[i]}</div>
+    <input type="radio" name="candidato" value="${i}" style="display:none;">
+  `;
+  div.addEventListener("click", ()=>{
+    document.querySelectorAll(".candidato").forEach(c=>c.classList.remove("selecionado"));
+    div.classList.add("selecionado");
+    div.querySelector('input[name="candidato"]').checked = true;
+  });
+  painel.appendChild(div);
+});
+
+// Funções principais
+function salvar(){ localStorage.setItem("votosCIPA", JSON.stringify(votos)); }
+function entrar(){ document.getElementById("entrada").style.display="none"; document.getElementById("votacao").style.display="flex"; }
+
+function abrirConfirmacao(e){
+  e.preventDefault();
+  const sel = document.querySelector('input[name="candidato"]:checked');
+  if(!sel){ alert("Selecione um candidato!"); return; }
+  votoTemp = sel.value;
+  document.getElementById("modalFoto").src = fotos[votoTemp];
+  document.getElementById("modalNome").textContent = nomes[votoTemp];
+  document.getElementById("modal").style.display="flex";
+}
+
+function cancelarVoto(){ document.getElementById("modal").style.display="none"; votoTemp=null; }
+
+function confirmarVoto(){
+  votos[votoTemp]++;
+  salvar();
+  document.getElementById("modal").style.display="none";
+
+  const alerta = document.getElementById("alerta");
+  alerta.style.display="block";
+  const som = document.getElementById("somSucesso");
+  som.currentTime=0; som.play();
+
+  setTimeout(()=>{
+    alerta.style.display="none";
+    document.getElementById("votacao").style.display="none";
+    document.getElementById("entrada").style.display="flex";
+    document.querySelectorAll('input[name="candidato"]').forEach(i=>i.checked=false);
+    document.querySelectorAll(".candidato").forEach(c=>c.classList.remove("selecionado"));
+  },2000);
+}
+
+// ADMIN
+function acessoAdmin(){ document.getElementById("modalSenha").style.display="flex"; }
+function fecharSenha(){ document.getElementById("modalSenha").style.display="none"; document.getElementById("senhaAdmin").value = ""; }
+function validarSenha(){
+  const senha = document.getElementById("senhaAdmin").value;
+  if(senha==="admin123"){ fecharSenha(); document.getElementById("entrada").style.display="none"; document.getElementById("admin").style.display="flex"; mostrarResultado(); }
+  else { alert("Senha incorreta!"); }
+}
+
+function mostrarResultado(){
+  const total = Math.max(...votos,1);
+  const container = document.getElementById("resultado");
+  container.innerHTML="";
+  votos.map((v,i)=>({nome:nomes[i], votos:v}))
+    .sort((a,b)=>b.votos-a.votos)
+    .forEach(d=>{
+      const linha = document.createElement("div");
+      linha.className="linha";
+      linha.innerHTML=`
+        <div class="label">${d.nome}</div>
+        <div class="barra">
+          <div class="preenchimento">${d.votos} voto(s)</div>
+        </div>`;
+      container.appendChild(linha);
+      setTimeout(()=>linha.querySelector(".preenchimento").style.width = `${(d.votos/total)*100}%`,50);
+    });
+}
+
+function voltar(){ document.getElementById("admin").style.display="none"; document.getElementById("entrada").style.display="flex"; }
+
+// Impressão em 1 página
+function imprimirResultado(){
+    const win = window.open('', '_blank', 'width=1200,height=900');
+
+    win.document.write(`
+    <html>
+    <head>
+        <title>Resultado da Votação</title>
+        <style>
+            @media print { 
+                body { margin: 10mm; -webkit-print-color-adjust: exact; }
+                .candidato-print { page-break-inside: avoid; }
+            }
+
+            body { font-family: Arial, sans-serif; text-align: center; background:#fff; }
+            h2 { color: #006837; margin-bottom: 20px; }
+            .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; justify-items:center; }
+            .candidato-print { border:2px solid #006837; border-radius:12px; padding:10px; background:#e6f5e6; }
+            .candidato-print img { width:90px; height:90px; border-radius:50%; border:3px solid #006837; object-fit:cover; }
+            .nome-print { font-weight:bold; color:#004d26; font-size:14px; margin-top:8px; }
+            .votos-print { font-size:13px; color:#006837; }
+            img.logo-impressao { max-width:180px; margin-bottom:15px; display:block; margin-left:auto; margin-right:auto; }
+        </style>
+    </head>
+    <body>
+        <img class="logo-impressao" src="unimed_vitoria_logo.png" alt="Unimed Vitória">
+        <h2>Resultado da Votação CIPA-PAUV<br>Gestão 2026/2027</h2>
+        <div class="grid">
+            ${
+                votos
+                .map((v,i)=>({nome:nomes[i], votos:v, foto:fotos[i]}))
+                .sort((a,b)=>b.votos-a.votos)
+                .map(d=>`
+                    <div class="candidato-print">
+                        <img src="${d.foto}" alt="${d.nome}">
+                        <div class="nome-print">${d.nome}</div>
+                        <div class="votos-print">${d.votos} voto(s)</div>
+                    </div>
+                `).join('')
+            }
+        </div>
+    </body>
+    </html>
+    `);
+
+    win.document.close();
+    win.focus();
+    win.print();
+}
+</script>
+</body>
+</html>
