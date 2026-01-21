@@ -1,0 +1,6 @@
+- [x] Adicionar botão "Limpar Votos" na seção #admin ao lado do "Imprimir Resultado"
+- [x] Criar modal para senha admin ao clicar no botão limpar
+- [x] Implementar função para limpar votos se senha correta
+- [x] Adicionar botão "Tela Cheia" na seção #admin
+- [x] Implementar função para alternar tela cheia usando Fullscreen API
+- [x] Adicionar crédito do desenvolvedor "Desenvolvido por Wanilton Laurenco" em letras miúdas no final da página
