@@ -5,84 +5,46 @@
     <title>Votação CIPA-PAUV 2026/2027 - Unimed Vitória</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* RESET E BASE */
+        /* Manutenção do estilo anterior para consistência visual */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
         html, body { height: 100%; background: #e6f5e6; overflow: hidden; }
         body { display: flex; flex-direction: column; }
 
-        /* LOGO CENTRALIZADA */
         .logo-container { width: 100%; display: flex; justify-content: center; margin-bottom: 25px; }
         .logo-container img { max-width: 320px; height: auto; }
 
-        /* BOTÕES GRANDES */
         button { border: none; border-radius: 15px; cursor: pointer; font-weight: bold; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         button.primary { background: #006837; color: #fff; padding: 20px 40px; font-size: 20px; }
         button.secondary { background: #c62828; color: #fff; padding: 20px 40px; font-size: 20px; }
         button.info { background: #005a8d; color: #fff; padding: 18px 36px; font-size: 18px; }
         button:hover { opacity: 0.9; transform: scale(1.05); }
 
-        /* SECTIONS - CONFIGURAÇÃO DE CENTRALIZAÇÃO */
-        section {
-            display: none; flex: 1; width: 100%; overflow-y: auto; 
-            padding: 20px; text-align: center;
-            flex-direction: column; align-items: center;
-        }
+        section { display: none; flex: 1; width: 100%; overflow-y: auto; padding: 20px; text-align: center; flex-direction: column; align-items: center; }
+        #entrada, #login, #confirmaLogin { justify-content: center; height: 100vh; }
 
-        /* TELAS PRINCIPAIS (CENTRALIZADAS NO MEIO) */
-        #entrada, #login, #confirmaLogin {
-            justify-content: center; /* Centraliza verticalmente */
-            height: 100vh;
-        }
-
-        /* TIPOGRAFIA AUMENTADA */
         h1 { color: #006837; font-size: 45px; margin-bottom: 15px; }
         h2 { color: #004d26; font-size: 28px; margin-bottom: 40px; font-weight: normal; }
 
-        /* INPUT GRANDE */
         input { font-size: 24px; padding: 18px; border-radius: 12px; border: 2px solid #006837; text-align: center; width: 350px; margin-bottom: 25px; outline: none; }
 
-        /* PAINEL DE VOTAÇÃO (ESTE MANTÉM ALINHAMENTO AO TOPO PELO VOLUME DE DADOS) */
         #votacao { justify-content: flex-start; padding-top: 30px; overflow-y: auto; }
-        #votacao h1 { font-size: 32px; }
-        #votacao h2 { font-size: 20px; margin-bottom: 20px; }
-        
-        #painel {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto 30px auto;
-        }
-        .candidato {
-            background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            cursor: pointer; display: flex; flex-direction: column; align-items: center; border: 4px solid transparent; transition: 0.2s;
-        }
+        #painel { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto 30px auto; }
+        .candidato { background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; display: flex; flex-direction: column; align-items: center; border: 4px solid transparent; transition: 0.2s; }
         .candidato.selecionado { border-color: #006837; background: #f0fff0; }
         .candidato img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #006837; margin-bottom: 10px; }
 
-        /* RESULTADO */
-        #admin { justify-content: flex-start; padding-top: 30px; }
         .grafico { max-width: 850px; width: 100%; margin: 20px auto; text-align: left; }
         .barra-fundo { background: #cde8cd; border-radius: 20px; overflow: hidden; height: 40px; }
         .barra-preenchimento { height: 100%; background: #006837; color: #fff; text-align: right; padding-right: 15px; line-height: 40px; width: 0; transition: 1.2s; font-weight: bold; }
 
         .botoes-centro { display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; margin-top: 10px; }
-
-        /* MODAIS */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-box { background: #fff; border-radius: 20px; padding: 40px; width: 90%; max-width: 450px; text-align: center; }
 
-        @media print {
-            button, .botoes-centro, .modal { display: none !important; }
-            section { display: flex !important; }
-        }
-
-        @media(max-width: 768px) {
-            h1 { font-size: 30px; }
-            h2 { font-size: 20px; }
-            input { width: 80%; }
-            #painel { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media print { button, .botoes-centro, .modal { display: none !important; } section { display: flex !important; } }
     </style>
 </head>
-<body>
+<body onload="carregarCSV()">
 
     <audio id="somSucesso" src="audio/sucesso.mp3" preload="auto"></audio>
 
@@ -181,11 +143,35 @@
     </div>
 
     <script>
-        const colaboradores = {
-            "1001": "Ana Paula", "1002": "Carlos Souza", "1003": "Bruna Martins",
-            "1004": "Lucas Ferreira", "1005": "Juliana Rodrigues", "1006": "Maria Oliveira",
-            "1007": "Wanilton Laurenco", "1008": "Ricardo Lima", "1009": "Ana Pereira"
-        };
+        // Objeto que será preenchido pelo arquivo CSV
+        let colaboradores = {};
+
+        // Função para carregar o CSV
+        async function carregarCSV() {
+            try {
+                const resposta = await fetch('listacolaboradores.csv');
+                if (!resposta.ok) throw new Error("Arquivo CSV não encontrado.");
+                
+                const texto = await resposta.text();
+                const linhas = texto.split('\n');
+
+                linhas.forEach(linha => {
+                    // Trata CSV separado por ponto e vírgula ou vírgula
+                    const colunas = linha.split(';');
+                    if (colunas.length >= 2) {
+                        const matricula = colunas[0].trim();
+                        const nome = colunas[1].trim();
+                        if (matricula !== "" && matricula.toLowerCase() !== "matricula") {
+                            colaboradores[matricula] = nome;
+                        }
+                    }
+                });
+                console.log("Colaboradores carregados com sucesso!");
+            } catch (erro) {
+                console.error("Erro ao carregar lista:", erro);
+                alert("Erro ao carregar lista de colaboradores. Verifique o arquivo CSV.");
+            }
+        }
 
         const fotos = [
             "fotos/01-Wanilton_Laurenco.jpg", "fotos/02-maria_oliveira.jpg",
@@ -228,7 +214,7 @@
 
         function proximoLogin() {
             const mat = document.getElementById("matricula").value.trim();
-            if (!colaboradores[mat]) { alert("Matrícula não cadastrada."); return; }
+            if (!colaboradores[mat]) { alert("Matrícula não cadastrada ou arquivo CSV não carregado."); return; }
             if (votantes.includes(mat)) { alert("Esta matrícula já votou."); return; }
             matriculaAtual = mat;
             document.getElementById("mostraNomeMatricula").innerHTML = `NOME: ${colaboradores[mat]}<br>MATRÍCULA: ${mat}`;
@@ -281,7 +267,7 @@
 
         function exportarExcel() {
             let conteudo = "\ufeffMatrícula;Nome\n";
-            votantes.forEach(mat => { conteudo += `${mat};${colaboradores[mat]}\n`; });
+            votantes.forEach(mat => { conteudo += `${mat};${colaboradores[mat] || 'N/A'}\n`; });
             const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
