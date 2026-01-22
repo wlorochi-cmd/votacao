@@ -2,176 +2,132 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Votação CIPA-PAUV 2026/2027 - Unimed Vitória</title>
+    <title>CIPA-PAUV 2026/2027</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* Manutenção do estilo anterior para consistência visual */
+        :root { --unimed-verde: #006837; --unimed-claro: #e6f5e6; --danger: #c62828; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
-        html, body { height: 100%; background: #e6f5e6; overflow: hidden; }
-        body { display: flex; flex-direction: column; }
+        body { background-color: var(--unimed-claro); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-        .logo-container { width: 100%; display: flex; justify-content: center; margin-bottom: 25px; }
-        .logo-container img { max-width: 320px; height: auto; }
+        .header { background: #fff; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header img { max-width: 180px; }
 
-        button { border: none; border-radius: 15px; cursor: pointer; font-weight: bold; transition: .3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        button.primary { background: #006837; color: #fff; padding: 20px 40px; font-size: 20px; }
-        button.secondary { background: #c62828; color: #fff; padding: 20px 40px; font-size: 20px; }
-        button.info { background: #005a8d; color: #fff; padding: 18px 36px; font-size: 18px; }
-        button:hover { opacity: 0.9; transform: scale(1.05); }
+        section { display: none; flex: 1; align-items: center; justify-content: center; padding: 20px; }
+        .painel-central { background: #fff; padding: 40px; border-radius: 25px; border: 2px solid var(--unimed-verde); box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
 
-        section { display: none; flex: 1; width: 100%; overflow-y: auto; padding: 20px; text-align: center; flex-direction: column; align-items: center; }
-        #entrada, #login, #confirmaLogin { justify-content: center; height: 100vh; }
+        h1 { color: var(--unimed-verde); font-size: 26px; margin-bottom: 20px; }
+        input { font-size: 22px; padding: 15px; border-radius: 12px; border: 2px solid #ddd; width: 100%; text-align: center; margin-bottom: 20px; outline: none; }
+        
+        button { border: none; border-radius: 12px; cursor: pointer; font-weight: bold; padding: 20px; font-size: 18px; transition: 0.3s; width: 100%; }
+        .btn-confirm { background: var(--unimed-verde); color: #fff; }
+        .btn-cancel { background: var(--danger); color: #fff; margin-top: 10px; }
 
-        h1 { color: #006837; font-size: 45px; margin-bottom: 15px; }
-        h2 { color: #004d26; font-size: 28px; margin-bottom: 40px; font-weight: normal; }
+        /* GRID VOTAÇÃO */
+        .grid-candidatos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; width: 100%; max-width: 900px; overflow-y: auto; padding: 10px; }
+        .card { background: #fff; border-radius: 15px; padding: 10px; cursor: pointer; border: 4px solid transparent; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .card img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--unimed-verde); margin-bottom: 8px; }
 
-        input { font-size: 24px; padding: 18px; border-radius: 12px; border: 2px solid #006837; text-align: center; width: 350px; margin-bottom: 25px; outline: none; }
+        /* REVISÃO */
+        .revisao-img { width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--unimed-verde); object-fit: cover; margin-bottom: 15px; }
+        
+        /* ANIMAÇÃO DE AGUARDE */
+        .spinner { border: 4px solid rgba(0, 104, 55, 0.1); border-left-color: var(--unimed-verde); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        #votacao { justify-content: flex-start; padding-top: 30px; overflow-y: auto; }
-        #painel { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px; width: 100%; max-width: 1100px; margin: 0 auto 30px auto; }
-        .candidato { background: #fff; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; display: flex; flex-direction: column; align-items: center; border: 4px solid transparent; transition: 0.2s; }
-        .candidato.selecionado { border-color: #006837; background: #f0fff0; }
-        .candidato img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #006837; margin-bottom: 10px; }
-
-        .grafico { max-width: 850px; width: 100%; margin: 20px auto; text-align: left; }
-        .barra-fundo { background: #cde8cd; border-radius: 20px; overflow: hidden; height: 40px; }
-        .barra-preenchimento { height: 100%; background: #006837; color: #fff; text-align: right; padding-right: 15px; line-height: 40px; width: 0; transition: 1.2s; font-weight: bold; }
-
-        .botoes-centro { display: flex; justify-content: center; gap: 25px; flex-wrap: wrap; margin-top: 10px; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-box { background: #fff; border-radius: 20px; padding: 40px; width: 90%; max-width: 450px; text-align: center; }
-
-        @media print { button, .botoes-centro, .modal { display: none !important; } section { display: flex !important; } }
+        @media print { .no-print { display: none !important; } }
     </style>
 </head>
-<body onload="carregarCSV()">
+<body onload="iniciarSistema()">
 
-    <audio id="somSucesso" src="audio/sucesso.mp3" preload="auto"></audio>
+    <audio id="somUrna" src="audio/sucesso.mp3"></audio>
+    <div class="header no-print"><img src="unimed_vitoria_logo.png"></div>
 
-    <section id="entrada" style="display:flex;">
-        <div class="logo-container"><img src="unimed_vitoria_logo.png"></div>
-        <h1>Votação CIPA-PAUV</h1>
-        <h2>Gestão 2026/2027</h2>
-        <div class="botoes-centro">
-            <button class="primary" onclick="abrirLogin()">Entrar para Votar</button>
-            <button class="primary" onclick="acessoAdmin()">Resultado Parcial</button>
+    <section id="tela-aguarde" style="display: flex;">
+        <div class="painel-central">
+            <h1>Bem-vindo à CIPA</h1>
+            <div class="spinner"></div>
+            <p style="color: #666; font-size: 18px;">Por favor, identifique-se com o fiscal para liberar sua votação.</p>
         </div>
     </section>
 
-    <section id="login">
-        <div class="logo-container"><img src="unimed_vitoria_logo.png"></div>
-        <h1>Identificação</h1>
-        <h2>Digite sua matrícula para acessar</h2>
-        <input type="text" id="matricula" placeholder="Ex: 1234" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-        <div class="botoes-centro">
-            <button class="primary" onclick="proximoLogin()">Avançar</button>
-            <button class="secondary" onclick="voltarEntrada()">Sair</button>
+    <section id="tela-entrada-confirm">
+        <div class="painel-central">
+            <h1 style="font-size: 20px;">Votação Liberada!</h1>
+            <div style="background: var(--unimed-claro); padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+                <p style="font-size: 16px; color: #333;">Olá,</p>
+                <p id="nome-eleitor-entrada" style="font-size: 22px; font-weight: bold; color: var(--unimed-verde);"></p>
+            </div>
+            <button class="btn-confirm" onclick="irParaVotacao()">CONFIRMAR E VOTAR</button>
         </div>
     </section>
 
-    <section id="confirmaLogin">
-        <div class="logo-container"><img src="unimed_vitoria_logo.png"></div>
-        <h1>Confirme seus Dados</h1>
-        <div style="background:white; padding:40px; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.1); margin-bottom:40px; width:100%; max-width:500px; border: 2px solid #006837;">
-            <p id="mostraNomeMatricula" style="font-size:26px; color:#006837; line-height:1.4; font-weight: bold;"></p>
-        </div>
-        <div class="botoes-centro">
-            <button class="primary" onclick="entrarVotacao()">Confirmar e Votar</button>
-            <button class="secondary" onclick="voltarLogin()">Corrigir Matrícula</button>
+    <section id="tela-fiscal">
+        <div class="painel-central">
+            <h1 style="color: #005a8d;">Painel do Fiscal</h1>
+            <input type="text" id="mat-fiscal" placeholder="Matrícula" oninput="buscarColaborador()">
+            <div id="display-colaborador" style="margin-bottom:20px; font-weight:bold; color: var(--unimed-verde); font-size: 18px;"></div>
+            <button id="btn-liberar" class="btn-confirm" style="display:none;" onclick="liberarNoSistema()">LIBERAR NO TABLET</button>
+            <button class="btn-cancel" onclick="window.location.href='index.html'">SAIR</button>
         </div>
     </section>
 
-    <section id="votacao">
-        <div class="logo-container"><img src="unimed_vitoria_logo.png"></div>
-        <h1>Painel de Votação</h1>
-        <h2>Escolha um candidato e clique em confirmar</h2>
-        <div id="painel"></div>
-        <div class="botoes-centro">
-            <button class="primary" onclick="abrirConfirmacao()">Confirmar Voto</button>
-            <button class="secondary" onclick="cancelarVotacao()">Cancelar</button>
+    <section id="tela-votacao" style="flex-direction: column;">
+        <h1 id="msg-eleitor-topo">Escolha seu Candidato</h1>
+        <div id="grid-fotos" class="grid-candidatos"></div>
+        <div style="max-width: 400px; width: 100%; display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn-esp" style="background:#ddd; flex:1;" onclick="revisarVoto('branco')">BRANCO</button>
+            <button class="btn-esp" style="background:#555; color:#fff; flex:1;" onclick="revisarVoto('nulo')">NULO</button>
         </div>
     </section>
 
-    <section id="admin">
-        <div class="logo-container"><img src="unimed_vitoria_logo.png"></div>
-        <h1>Resultado Parcial</h1>
-        <div class="grafico" id="resultado"></div>
-        <div style="font-size:24px; font-weight:bold; color:#006837; margin-top:20px;" id="infoEleitores">
-            Eleitores que votaram: 0
-        </div>
-        <div class="botoes-centro" style="margin-top:40px;">
-            <button class="info" onclick="exportarExcel()">📊 Exportar Planilha</button>
-            <button class="primary" onclick="window.print()">🖨️ Imprimir</button>
-            <button class="secondary" onclick="abrirSenhaLimpar()">🗑️ Limpar Votos</button>
-            <button class="primary" onclick="voltar()">Início</button>
+    <section id="tela-revisao">
+        <div class="painel-central">
+            <h1 style="color: var(--danger)">Confirme seu Voto</h1>
+            <div id="caixa-revisao"></div>
+            <button class="btn-confirm" onclick="registrarVoto()">CONFIRMAR FINAL</button>
+            <button class="btn-cancel" onclick="mostrar('tela-votacao')">CORRIGIR</button>
         </div>
     </section>
 
-    <div class="modal" id="modalConfirmar">
-        <div class="modal-box">
-            <img id="modalFoto" src="" style="width:150px; height:150px; border-radius:50%; border:4px solid #006837; margin-bottom:20px; object-fit:cover;">
-            <h3 id="modalNome" style="font-size:24px; color:#006837; margin-bottom:15px;"></h3>
-            <p style="font-size:18px; margin-bottom:30px;">Confirma seu voto para este candidato?</p>
-            <div class="botoes-centro">
-                <button class="primary" onclick="confirmarVoto()">SIM</button>
-                <button class="secondary" onclick="fecharModais()">NÃO</button>
+    <section id="tela-admin-login" style="background: var(--unimed-verde); display: none;">
+        <div class="painel-central">
+            <div class="logo-container"><img src="unimed_vitoria_logo.png" style="width:150px; margin-bottom:20px;"></div>
+            <h1>Acesso Admin</h1>
+            <input type="password" id="senha-admin" placeholder="Senha Administrativa">
+            <button class="btn-confirm" onclick="validarAdmin()">VER APURAÇÃO</button>
+        </div>
+    </section>
+
+    <section id="tela-admin-res" style="flex-direction: column;">
+        <div style="width: 100%; max-width: 1000px; background:white; padding: 20px; border-radius: 20px;">
+            <h1>Apuração Final</h1>
+            <div id="grid-resultados" class="grid-candidatos"></div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px;">
+                <div style="background:#eee; padding:10px; border-radius:10px;">VOTOS <b id="res-val">0</b></div>
+                <div style="background:#eee; padding:10px; border-radius:10px;">BRANCO <b id="res-bra">0</b></div>
+                <div style="background:#eee; padding:10px; border-radius:10px;">NULO <b id="res-nul">0</b></div>
+                <div style="background:#eee; padding:10px; border-radius:10px;">TOTAL <b id="res-total">0</b></div>
+            </div>
+            <div class="no-print" style="margin-top:20px; display:flex; gap:10px;">
+                <button onclick="exportarExcel()" style="background:#005a8d; color:white;">EXCEL</button>
+                <button class="btn-confirm" onclick="window.print()">IMPRIMIR</button>
+                <button class="btn-cancel" onclick="resetarSistema()">ZERAR</button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="modal" id="modalSenha">
-        <div class="modal-box">
-            <h2>Acesso Restrito</h2><br>
-            <input type="password" id="senhaAdmin" style="width:100%"><br>
-            <div class="botoes-centro">
-                <button class="primary" onclick="validarSenha()">Entrar</button>
-                <button class="secondary" onclick="fecharModais()">Sair</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="modalLimpar">
-        <div class="modal-box">
-            <h2 style="color:red">Atenção!</h2><br>
-            <p>Digite a senha para apagar todos os votos:</p><br>
-            <input type="password" id="senhaLimpar" style="width:100%"><br>
-            <div class="botoes-centro">
-                <button class="secondary" onclick="confirmarLimparVotos()">ZERAR</button>
-                <button class="primary" onclick="fecharModais()">CANCELAR</button>
-            </div>
+    <div id="modal-sucesso" style="position:fixed; inset:0; background:rgba(255,255,255,0.95); display:none; align-items:center; justify-content:center; z-index:9999;">
+        <div class="painel-central">
+            <div style="font-size: 80px; color: var(--unimed-verde);">✓</div>
+            <h1>VOTO GRAVADO!</h1>
+            <p>Obrigado por participar.</p>
         </div>
     </div>
 
     <script>
-        // Objeto que será preenchido pelo arquivo CSV
         let colaboradores = {};
-
-        // Função para carregar o CSV
-        async function carregarCSV() {
-            try {
-                const resposta = await fetch('listacolaboradores.csv');
-                if (!resposta.ok) throw new Error("Arquivo CSV não encontrado.");
-                
-                const texto = await resposta.text();
-                const linhas = texto.split('\n');
-
-                linhas.forEach(linha => {
-                    // Trata CSV separado por ponto e vírgula ou vírgula
-                    const colunas = linha.split(';');
-                    if (colunas.length >= 2) {
-                        const matricula = colunas[0].trim();
-                        const nome = colunas[1].trim();
-                        if (matricula !== "" && matricula.toLowerCase() !== "matricula") {
-                            colaboradores[matricula] = nome;
-                        }
-                    }
-                });
-                console.log("Colaboradores carregados com sucesso!");
-            } catch (erro) {
-                console.error("Erro ao carregar lista:", erro);
-                alert("Erro ao carregar lista de colaboradores. Verifique o arquivo CSV.");
-            }
-        }
+        let matriculaAtiva = "";
+        let votoEscolhido = null;
 
         const fotos = [
             "fotos/01-Wanilton_Laurenco.jpg", "fotos/02-maria_oliveira.jpg",
@@ -180,111 +136,149 @@
             "fotos/07-bruna_martins.jpg", "fotos/08-ricardo_lima.jpg",
             "fotos/09-juliana_rodrigues.jpg"
         ];
-
         const nomesCandidatos = fotos.map(f => {
-            const arquivo = f.split('/').pop().split('.')[0];
-            return arquivo.slice(0, 2) + " - " + arquivo.slice(3).replace(/_/g, ' ');
+            const arq = f.split('/').pop().split('.')[0];
+            return arq.slice(0, 2) + " - " + arq.slice(3).replace(/_/g, ' ');
         });
 
-        let votos = JSON.parse(localStorage.getItem("votosCIPA")) || Array(fotos.length).fill(0);
-        let votantes = JSON.parse(localStorage.getItem("votantesCIPA")) || [];
-        let matriculaAtual = "";
-        let votoTemp = null;
-
-        const painel = document.getElementById("painel");
-        fotos.forEach((foto, i) => {
-            const div = document.createElement("div");
-            div.className = "candidato";
-            div.innerHTML = `<img src="${foto}"><div style="font-weight:bold; color:#006837;">${nomesCandidatos[i]}</div>`;
-            div.onclick = () => {
-                document.querySelectorAll(".candidato").forEach(c => c.classList.remove("selecionado"));
-                div.classList.add("selecionado");
-                votoTemp = i;
-            };
-            painel.appendChild(div);
-        });
-
-        function mostrarSection(id) {
-            document.querySelectorAll("section").forEach(s => s.style.display = "none");
-            document.getElementById(id).style.display = "flex";
+        async function iniciarSistema() {
+            await carregarCSV();
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.has('admin')) {
+                mostrar('tela-admin-login');
+            } else if (params.has('fiscal')) {
+                mostrar('tela-fiscal');
+            } else {
+                // TELA DO ELEITOR: Verifica liberação a cada 2 segundos
+                checkLiberacaoContinuamente();
+            }
         }
 
-        function abrirLogin() { mostrarSection("login"); }
-        function voltarEntrada() { location.reload(); }
-
-        function proximoLogin() {
-            const mat = document.getElementById("matricula").value.trim();
-            if (!colaboradores[mat]) { alert("Matrícula não cadastrada ou arquivo CSV não carregado."); return; }
-            if (votantes.includes(mat)) { alert("Esta matrícula já votou."); return; }
-            matriculaAtual = mat;
-            document.getElementById("mostraNomeMatricula").innerHTML = `NOME: ${colaboradores[mat]}<br>MATRÍCULA: ${mat}`;
-            mostrarSection("confirmaLogin");
+        function checkLiberacaoContinuamente() {
+            setInterval(() => {
+                const lib = localStorage.getItem("liberado");
+                if (lib && matriculaAtiva === "") {
+                    matriculaAtiva = lib;
+                    document.getElementById('nome-eleitor-entrada').textContent = colaboradores[lib] || lib;
+                    mostrar('tela-entrada-confirm');
+                }
+            }, 1000);
         }
 
-        function entrarVotacao() { mostrarSection("votacao"); }
-        function voltarLogin() { mostrarSection("login"); }
-
-        function abrirConfirmacao() {
-            if (votoTemp === null) { alert("Selecione um candidato."); return; }
-            document.getElementById("modalFoto").src = fotos[votoTemp];
-            document.getElementById("modalNome").textContent = nomesCandidatos[votoTemp];
-            document.getElementById("modalConfirmar").style.display = "flex";
+        async function carregarCSV() {
+            try {
+                const res = await fetch('listacolaboradores.csv');
+                const text = await res.text();
+                text.split('\n').forEach(linha => {
+                    const col = linha.split(';');
+                    if (col.length >= 2) colaboradores[col[0].trim()] = col[1].trim();
+                });
+            } catch (e) { console.log("Erro CSV"); }
+            renderizarCards();
         }
 
-        function confirmarVoto() {
-            const som = document.getElementById("somSucesso");
-            if (som) { som.currentTime = 0; som.play().catch(e => console.log(e)); }
-            votos[votoTemp]++;
-            votantes.push(matriculaAtual);
-            localStorage.setItem("votosCIPA", JSON.stringify(votos));
-            localStorage.setItem("votantesCIPA", JSON.stringify(votantes));
-            fecharModais();
-            alert("VOTO REGISTRADO COM SUCESSO!");
-            location.reload();
+        // --- FISCAL ---
+        function buscarColaborador() {
+            const m = document.getElementById('mat-fiscal').value.trim();
+            const display = document.getElementById('display-colaborador');
+            const btn = document.getElementById('btn-liberar');
+            const jaVotou = (JSON.parse(localStorage.getItem("votantes")) || []).includes(m);
+
+            if (jaVotou) { display.textContent = "❌ JÁ VOTOU!"; btn.style.display="none"; }
+            else if (colaboradores[m]) { display.textContent = "✅ " + colaboradores[m]; btn.style.display="block"; }
+            else { display.textContent = ""; btn.style.display="none"; }
         }
 
-        function acessoAdmin() { document.getElementById("modalSenha").style.display = "flex"; }
-        function validarSenha() {
-            if (document.getElementById("senhaAdmin").value === "admin123") {
-                fecharModais(); mostrarSection("admin"); mostrarResultado();
+        function liberarNoSistema() {
+            const m = document.getElementById('mat-fiscal').value.trim();
+            localStorage.setItem("liberado", m);
+            alert("Liberado! O tablet do eleitor vai atualizar sozinho.");
+            document.getElementById('mat-fiscal').value = "";
+            buscarColaborador();
+        }
+
+        // --- ELEITOR ---
+        function irParaVotacao() {
+            document.getElementById('msg-eleitor-topo').textContent = "Candidatos - " + colaboradores[matriculaAtiva];
+            mostrar('tela-votacao');
+        }
+
+        function renderizarCards() {
+            const grid = document.getElementById('grid-fotos');
+            grid.innerHTML = "";
+            fotos.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `<img src="${f}"><div><small>${nomesCandidatos[i]}</small></div>`;
+                div.onclick = () => revisarVoto(i);
+                grid.appendChild(div);
+            });
+        }
+
+        function revisarVoto(idx) {
+            votoEscolhido = idx;
+            const caixa = document.getElementById('caixa-revisao');
+            if (idx === 'branco') { votoEscolhido = 9; caixa.innerHTML = `<h1>VOTO BRANCO</h1>`; }
+            else if (idx === 'nulo') { votoEscolhido = 10; caixa.innerHTML = `<h1 style="color:red">VOTO NULO</h1>`; }
+            else { caixa.innerHTML = `<img src="${fotos[idx]}" class="revisao-img"><h1>${nomesCandidatos[idx]}</h1>`; }
+            mostrar('tela-revisao');
+        }
+
+        function registrarVoto() {
+            let votos = JSON.parse(localStorage.getItem("votos")) || Array(11).fill(0);
+            let votantes = JSON.parse(localStorage.getItem("votantes")) || [];
+            votos[votoEscolhido]++;
+            votantes.push(matriculaAtiva);
+            localStorage.setItem("votos", JSON.stringify(votos));
+            localStorage.setItem("votantes", JSON.stringify(votantes));
+            localStorage.removeItem("liberado"); // Bloqueia o tablet de novo
+
+            document.getElementById('somUrna').play();
+            document.getElementById('modal-sucesso').style.display = 'flex';
+            setTimeout(() => { location.reload(); }, 3000);
+        }
+
+        // --- ADMIN ---
+        function validarAdmin() {
+            if (document.getElementById('senha-admin').value === "admin123") {
+                mostrar('tela-admin-res');
+                carregarResultados();
             } else { alert("Senha incorreta"); }
         }
 
-        function mostrarResultado() {
-            const container = document.getElementById("resultado");
-            container.innerHTML = "";
-            const totalMax = Math.max(...votos, 1);
-            votos.map((v, i) => ({ nome: nomesCandidatos[i], qtd: v }))
-                 .sort((a, b) => b.qtd - a.qtd)
-                 .forEach(item => {
-                    const div = document.createElement("div");
-                    div.style.marginBottom = "20px";
-                    div.innerHTML = `<div style="font-weight:bold; margin-bottom:5px;">${item.nome}</div><div class="barra-fundo"><div class="barra-preenchimento" style="width:${(item.qtd/totalMax*100)}%">${item.qtd} voto(s)</div></div>`;
-                    container.appendChild(div);
-                 });
-            document.getElementById("infoEleitores").textContent = `Eleitores que votaram: ${votantes.length}`;
+        function carregarResultados() {
+            const grid = document.getElementById('grid-resultados');
+            grid.innerHTML = "";
+            let v = JSON.parse(localStorage.getItem("votos")) || Array(11).fill(0);
+            fotos.forEach((f, i) => {
+                grid.innerHTML += `<div class="card"><img src="${f}"><b>${nomesCandidatos[i]}</b><br><b style="color:red;">${v[i]}</b></div>`;
+            });
+            document.getElementById('res-val').textContent = v.slice(0, 9).reduce((a, b) => a + b, 0);
+            document.getElementById('res-bra').textContent = v[9];
+            document.getElementById('res-nul').textContent = v[10];
+            document.getElementById('res-total').textContent = (JSON.parse(localStorage.getItem("votantes")) || []).length;
         }
 
         function exportarExcel() {
-            let conteudo = "\ufeffMatrícula;Nome\n";
-            votantes.forEach(mat => { conteudo += `${mat};${colaboradores[mat] || 'N/A'}\n`; });
-            const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "relatorio_votantes.csv";
-            link.click();
+            let csv = "\ufeffMatrícula;Nome\n";
+            let vts = JSON.parse(localStorage.getItem("votantes")) || [];
+            vts.forEach(m => csv += `${m};${colaboradores[m] || 'N/A'}\n`);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "Relatorio_CIPA.csv";
+            a.click();
         }
 
-        function abrirSenhaLimpar() { document.getElementById("modalLimpar").style.display = "flex"; }
-        function confirmarLimparVotos() {
-            if (document.getElementById("senhaLimpar").value === "admin1234") {
-                localStorage.clear(); location.reload();
-            } else { alert("Senha incorreta"); }
+        function resetarSistema() {
+            if (prompt("Senha para ZERAR:") === "admin1234") { localStorage.clear(); location.reload(); }
         }
 
-        function fecharModais() { document.querySelectorAll(".modal").forEach(m => m.style.display = "none"); }
-        function voltar() { location.reload(); }
-        function cancelarVotacao() { location.reload(); }
+        function mostrar(id) {
+            document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+        }
     </script>
 </body>
 </html>
